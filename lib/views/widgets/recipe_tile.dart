@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cook_ease_app/config/theme/app_colors.dart';
+import 'package:cook_ease_app/config/themes/app_colors.dart';
 import 'package:go_router/go_router.dart';
 
 class RecipeTile extends StatelessWidget {

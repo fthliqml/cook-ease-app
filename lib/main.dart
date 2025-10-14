@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cook_ease_app/config/routes/app_routes.dart';
-import 'package:cook_ease_app/config/theme/app_themes.dart';
+import 'package:cook_ease_app/config/themes/app_themes.dart';
 
 void main() {
   runApp(const MyApp());

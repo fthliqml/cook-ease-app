@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:cook_ease_app/config/theme/app_colors.dart';
+import 'package:cook_ease_app/config/themes/app_colors.dart';
 import 'package:cook_ease_app/core/models/recipes_data.dart';
 import 'package:go_router/go_router.dart';
 
