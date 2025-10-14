@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cook_ease_app/config/themes/app_colors.dart';
 import 'package:cook_ease_app/views/widgets/recipe_tile.dart';
 import 'package:flutter/services.dart';
-import 'package:cook_ease_app/core/models/recipes_data.dart';
+import 'package:cook_ease_app/services/app_services.dart';
 
 class RecipeListPage extends StatefulWidget {
   const RecipeListPage({super.key});
@@ -30,11 +30,26 @@ class _RecipeListPageState extends State<RecipeListPage> {
   }
 
   void _initializeData() {
-    // Use centralized data source so detail can fetch by id
-    allRecipes = List<Map<String, dynamic>>.from(RecipesData.recipes);
-
-    // Show all recipes initially
-    searchResult = List.from(allRecipes);
+    // Load from repository (converted to map for existing UI)
+    AppServices.recipeRepository.getAllRecipes().then((dbItems) {
+      final list = dbItems
+          .map<Map<String, dynamic>>(
+            (r) => {
+              'id': r.id.toString(),
+              'title': r.title,
+              'photo': r.imgUrl,
+              'cookTime': r.cookTime,
+              'rating': 0.0,
+              'description': r.description,
+            },
+          )
+          .toList();
+      if (!mounted) return;
+      setState(() {
+        allRecipes = list;
+        searchResult = List.from(allRecipes);
+      });
+    });
     popularRecipeKeyword = ['Ayam', 'Nasi', 'Sayur', 'Pedas', 'Manis'];
   }
 

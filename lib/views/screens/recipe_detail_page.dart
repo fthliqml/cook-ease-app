@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cook_ease_app/config/themes/app_colors.dart';
-import 'package:cook_ease_app/core/models/recipes_data.dart';
+import 'package:cook_ease_app/services/app_services.dart';
 import 'package:go_router/go_router.dart';
 
 class RecipeDetailPage extends StatefulWidget {
@@ -85,7 +85,26 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
   @override
   Widget build(BuildContext context) {
     // lazy load data by id to ensure latest state on rebuilds
-    _data ??= RecipesData.getById(widget.recipeId);
+    if (_data == null) {
+      final id = int.tryParse(widget.recipeId);
+      if (id != null) {
+        AppServices.recipeRepository.getRecipeById(id).then((r) {
+          if (!mounted) return;
+          setState(() {
+            _data = r == null
+                ? null
+                : {
+                    'id': r.id.toString(),
+                    'title': r.title,
+                    'photo': r.imgUrl,
+                    'cookTime': r.cookTime,
+                    'rating': 0.0,
+                    'description': r.description,
+                  };
+          });
+        });
+      }
+    }
     final data =
         _data ??
         {
