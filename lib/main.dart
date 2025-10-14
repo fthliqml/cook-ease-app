@@ -1,12 +1,14 @@
 import 'package:cook_ease_app/config/routes/app_routes.dart';
 import 'package:cook_ease_app/config/themes/app_themes.dart';
-import 'package:cook_ease_app/services/app_services.dart';
+import 'package:cook_ease_app/data/local/drift/db_provider.dart';
+import 'package:cook_ease_app/data/local/drift/seeders/seeder_runner.dart';
 import 'package:flutter/material.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Initialize database and seed from legacy static data if empty
-  await AppServices.seedIfEmpty();
+  // Run centralized seeders on a single shared DB instance
+  final db = DBProvider().database;
+  await SeederRunner.run(db);
   runApp(const MyApp());
 }
 

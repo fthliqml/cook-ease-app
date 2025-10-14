@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:cook_ease_app/config/themes/app_colors.dart';
 import 'package:cook_ease_app/views/widgets/recipe_tile.dart';
 import 'package:flutter/services.dart';
-import 'package:cook_ease_app/services/app_services.dart';
+import 'package:cook_ease_app/viewmodels/recipe_list_view_model.dart';
+import 'package:cook_ease_app/data/local/drift/db_provider.dart';
+import 'package:cook_ease_app/repository/recipe_repository.dart';
 
 class RecipeListPage extends StatefulWidget {
   const RecipeListPage({super.key});
@@ -14,60 +16,30 @@ class RecipeListPage extends StatefulWidget {
 
 class _RecipeListPageState extends State<RecipeListPage> {
   late TextEditingController searchInputController;
-
-  // Static data - all recipes
-  List<Map<String, dynamic>> allRecipes = [];
-  List<Map<String, dynamic>> searchResult = [];
-  List<String> popularRecipeKeyword = [];
+  late final RecipeListViewModel vm;
 
   @override
   void initState() {
     super.initState();
     searchInputController = TextEditingController();
 
-    // Initialize data
-    _initializeData();
+    // Construct repository using shared DB instance.
+    final repo = RecipeRepository(DBProvider().database);
+    vm = RecipeListViewModel(repo);
+    vm.addListener(_onVmChanged);
+    vm.init();
   }
 
-  void _initializeData() {
-    // Load from repository (converted to map for existing UI)
-    AppServices.recipeRepository.getAllRecipes().then((dbItems) {
-      final list = dbItems
-          .map<Map<String, dynamic>>(
-            (r) => {
-              'id': r.id.toString(),
-              'title': r.title,
-              'photo': r.imgUrl,
-              'cookTime': r.cookTime,
-              'rating': 0.0,
-              'description': r.description,
-            },
-          )
-          .toList();
-      if (!mounted) return;
-      setState(() {
-        allRecipes = list;
-        searchResult = List.from(allRecipes);
-      });
-    });
-    popularRecipeKeyword = ['Ayam', 'Nasi', 'Sayur', 'Pedas', 'Manis'];
-  }
+  void _onVmChanged() => setState(() {});
 
   void _searchRecipes(String query) {
-    setState(() {
-      if (query.isEmpty) {
-        searchResult = List.from(allRecipes);
-      } else {
-        searchResult = allRecipes.where((recipe) {
-          return recipe['title'].toLowerCase().contains(query.toLowerCase());
-        }).toList();
-      }
-    });
+    vm.search(query);
   }
 
   @override
   void dispose() {
     searchInputController.dispose();
+    vm.removeListener(_onVmChanged);
     super.dispose();
   }
 
@@ -195,15 +167,15 @@ class _RecipeListPageState extends State<RecipeListPage> {
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: popularRecipeKeyword.length,
+                    itemCount: vm.popularKeywords.length,
                     itemBuilder: (context, index) {
                       return Container(
                         margin: const EdgeInsets.only(right: 8, top: 10),
                         child: OutlinedButton(
                           onPressed: () {
                             searchInputController.text =
-                                popularRecipeKeyword[index];
-                            _searchRecipes(popularRecipeKeyword[index]);
+                                vm.popularKeywords[index];
+                            _searchRecipes(vm.popularKeywords[index]);
                           },
                           style: OutlinedButton.styleFrom(
                             side: BorderSide(
@@ -212,7 +184,7 @@ class _RecipeListPageState extends State<RecipeListPage> {
                             ),
                           ),
                           child: Text(
-                            popularRecipeKeyword[index],
+                            vm.popularKeywords[index],
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.7),
                               fontWeight: FontWeight.w400,
@@ -237,21 +209,21 @@ class _RecipeListPageState extends State<RecipeListPage> {
                   Container(
                     margin: const EdgeInsets.only(bottom: 15),
                     child: Text(
-                      searchResult.isEmpty
+                      vm.searchResult.isEmpty
                           ? 'No recipes found'
-                          : 'Found ${searchResult.length} recipe(s)',
+                          : 'Found ${vm.searchResult.length} recipe(s)',
                       style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                   ),
                   Expanded(
                     child: ListView.builder(
-                      itemCount: searchResult.length,
+                      itemCount: vm.searchResult.length,
                       itemBuilder: (context, index) {
                         return Container(
                           margin: EdgeInsets.only(
-                            bottom: index < searchResult.length - 1 ? 16 : 0,
+                            bottom: index < vm.searchResult.length - 1 ? 16 : 0,
                           ),
-                          child: RecipeTile(data: searchResult[index]),
+                          child: RecipeTile(data: vm.searchResult[index]),
                         );
                       },
                     ),

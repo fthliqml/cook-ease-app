@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cook_ease_app/config/themes/app_colors.dart';
-import 'package:cook_ease_app/services/app_services.dart';
+import 'package:cook_ease_app/data/local/drift/db_provider.dart';
+import 'package:cook_ease_app/repository/recipe_repository.dart';
 import 'package:go_router/go_router.dart';
 
 class RecipeDetailPage extends StatefulWidget {
@@ -88,7 +89,8 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
     if (_data == null) {
       final id = int.tryParse(widget.recipeId);
       if (id != null) {
-        AppServices.recipeRepository.getRecipeById(id).then((r) {
+        final repo = RecipeRepository(DBProvider().database);
+        repo.getRecipeById(id).then((r) {
           if (!mounted) return;
           setState(() {
             _data = r == null
