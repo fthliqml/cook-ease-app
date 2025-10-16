@@ -1,91 +1,95 @@
 import 'package:flutter/material.dart';
-import 'package:cook_ease_app/config/themes/app_colors.dart';
 import 'package:go_router/go_router.dart';
 
 class RecipeTile extends StatelessWidget {
   final Map<String, dynamic> data;
+  final VoidCallback? onToggleFavorite;
+  final bool? isFavorite;
 
-  const RecipeTile({super.key, required this.data});
+  const RecipeTile({
+    super.key,
+    required this.data,
+    this.onToggleFavorite,
+    this.isFavorite,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        final id = (data['id'] ?? '').toString();
-        if (id.isNotEmpty) {
-          context.push('/recipes/$id');
-        }
-      },
-      child: Container(
-        height: 90,
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: AppColors.whiteSoft,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
+    final scheme = Theme.of(context).colorScheme;
+    final id = (data['id'] ?? '').toString();
+    final title = (data['title'] ?? 'No Title').toString();
+    final cookTime = (data['cookTime'] ?? '0 min').toString();
+    final photoPath = (data['photo'] ?? 'assets/images/placeholder.jpg')
+        .toString();
+    final fav = isFavorite ?? (data['isFavorite'] as bool?) ?? false;
+
+    return Card(
+      elevation: 3,
+      color: Colors.white,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      surfaceTintColor: scheme.surfaceTint,
+      child: InkWell(
+        onTap: () {
+          if (id.isNotEmpty) context.push('/recipes/$id');
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Recipe Photo
-            Container(
-              width: 70,
-              height: 70,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(5),
-                color: Colors.blueGrey,
-                image: DecorationImage(
-                  image: AssetImage(
-                    data['photo'] ?? 'assets/images/placeholder.jpg',
-                  ),
-                  fit: BoxFit.cover,
-                ),
-              ),
+            // Top image
+            SizedBox(
+              width: double.infinity,
+              height: 160,
+              child: Ink.image(image: AssetImage(photoPath), fit: BoxFit.cover),
             ),
-            // Recipe Info
-            Expanded(
-              child: Container(
-                margin: const EdgeInsets.only(left: 10),
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Recipe title
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: Text(
-                        data['title'] ?? 'No Title',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'inter',
+            // Info section
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                    ),
-                    // Recipe Rating and Time
-                    Row(
-                      children: [
-                        // Rating with star icon
-                        const Icon(Icons.star, color: Colors.orange, size: 14),
-                        Container(
-                          margin: const EdgeInsets.only(left: 5),
-                          child: Text(
-                            data['rating']?.toString() ?? '0.0',
-                            style: const TextStyle(fontSize: 12),
-                          ),
+                      IconButton(
+                        onPressed: onToggleFavorite,
+                        icon: Icon(
+                          fav ? Icons.favorite : Icons.favorite_border_outlined,
+                          color: fav ? scheme.primary : scheme.onSurfaceVariant,
                         ),
-                        const SizedBox(width: 10),
-                        // Time
-                        const Icon(Icons.alarm, size: 14, color: Colors.black),
-                        Container(
-                          margin: const EdgeInsets.only(left: 5),
-                          child: Text(
-                            data['cookTime'] ?? '0 min',
-                            style: const TextStyle(fontSize: 12),
-                          ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.alarm,
+                        size: 16,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        cookTime,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: scheme.onSurfaceVariant,
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],

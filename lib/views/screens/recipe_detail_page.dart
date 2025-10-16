@@ -43,7 +43,11 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
     if (scrollController.position.hasPixels) {
       if (scrollController.position.pixels > 2.0) {
         setState(() {
-          appBarColor = AppColors.primary;
+          // Match the info section color for better consistency
+          appBarColor = Color.alphaBlend(
+            Colors.black.withValues(alpha: 0.08),
+            Theme.of(context).colorScheme.primary,
+          );
         });
       }
       if (scrollController.position.pixels <= 2.0) {
@@ -69,23 +73,34 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
   ];
 
   List<Map<String, dynamic>> get tutorials => [
-    {'step': 1, 'description': 'Panaskan minyak dalam wajan dengan api sedang'},
-    {
-      'step': 2,
-      'description': 'Tumis bawang merah dan bawang putih hingga harum',
-    },
-    {'step': 3, 'description': 'Masukkan telur, orak-arik hingga matang'},
-    {'step': 4, 'description': 'Masukkan nasi putih, aduk rata'},
-    {
-      'step': 5,
-      'description': 'Tambahkan kecap manis dan garam, aduk hingga rata',
-    },
-    {'step': 6, 'description': 'Masak hingga nasi panas merata, sajikan'},
-  ];
+        {
+          'step': 1,
+          'description': 'Panaskan minyak dalam wajan dengan api sedang'
+        },
+        {
+          'step': 2,
+          'description': 'Tumis bawang merah dan bawang putih hingga harum',
+        },
+        {'step': 3, 'description': 'Masukkan telur, orak-arik hingga matang'},
+        {'step': 4, 'description': 'Masukkan nasi putih, aduk rata'},
+        {
+          'step': 5,
+          'description': 'Tambahkan kecap manis dan garam, aduk hingga rata',
+        },
+        {
+          'step': 6,
+          'description': 'Masak hingga nasi panas merata, sajikan'
+        },
+      ];
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    // Shared darker primary used by app bar (scrolled), info section, and FAB
+    final infoBg = Color.alphaBlend(
+      Colors.black.withValues(alpha: 0.08),
+      scheme.primary,
+    );
     // lazy load data by id to ensure latest state on rebuilds
     if (_data == null) {
       final id = int.tryParse(widget.recipeId);
@@ -157,7 +172,8 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
         onPressed: () {
           context.push('/recipes/${widget.recipeId}/cook');
         },
-        backgroundColor: AppColors.primary,
+        // Match the info section color
+        backgroundColor: infoBg,
         child: const Icon(Icons.play_arrow, size: 28, color: Colors.white),
       ),
       body: ListView(
@@ -207,11 +223,8 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
               left: 16,
               right: 16,
             ),
-            // Slightly darken primary for better contrast
-            color: Color.alphaBlend(
-              Colors.black.withValues(alpha: 0.08),
-              scheme.primary,
-            ),
+            // Slightly darken primary for better contrast (shared)
+            color: infoBg,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
