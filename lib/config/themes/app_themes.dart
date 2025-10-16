@@ -14,7 +14,7 @@ class AppThemes {
       brightness: brightness,
     );
 
-    final textTheme = GoogleFonts.interTextTheme();
+    final textTheme = GoogleFonts.poppinsTextTheme();
 
     final isDark = brightness == Brightness.dark;
 
@@ -53,7 +53,7 @@ class AppThemes {
         ),
         filled: true,
         fillColor: isDark
-            ? scheme.surfaceVariant
+            ? scheme.surfaceContainerHighest
             : scheme.surfaceContainerHighest,
         hintStyle: textTheme.bodyMedium?.copyWith(
           color: scheme.onSurfaceVariant,
