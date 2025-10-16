@@ -73,25 +73,19 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
   ];
 
   List<Map<String, dynamic>> get tutorials => [
-        {
-          'step': 1,
-          'description': 'Panaskan minyak dalam wajan dengan api sedang'
-        },
-        {
-          'step': 2,
-          'description': 'Tumis bawang merah dan bawang putih hingga harum',
-        },
-        {'step': 3, 'description': 'Masukkan telur, orak-arik hingga matang'},
-        {'step': 4, 'description': 'Masukkan nasi putih, aduk rata'},
-        {
-          'step': 5,
-          'description': 'Tambahkan kecap manis dan garam, aduk hingga rata',
-        },
-        {
-          'step': 6,
-          'description': 'Masak hingga nasi panas merata, sajikan'
-        },
-      ];
+    {'step': 1, 'description': 'Panaskan minyak dalam wajan dengan api sedang'},
+    {
+      'step': 2,
+      'description': 'Tumis bawang merah dan bawang putih hingga harum',
+    },
+    {'step': 3, 'description': 'Masukkan telur, orak-arik hingga matang'},
+    {'step': 4, 'description': 'Masukkan nasi putih, aduk rata'},
+    {
+      'step': 5,
+      'description': 'Tambahkan kecap manis dan garam, aduk hingga rata',
+    },
+    {'step': 6, 'description': 'Masak hingga nasi panas merata, sajikan'},
+  ];
 
   @override
   Widget build(BuildContext context) {
