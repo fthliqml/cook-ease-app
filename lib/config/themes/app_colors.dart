@@ -7,7 +7,7 @@ class AppColors {
 
   // Brand seed / primary palette anchors
   // Orange palette
-  static const Color primary = Color(0xFFD99651); // Seed
+  static const Color primary = Color(0xFFE6A86B); // Lighter seed
   static const Color primarySoft = Color(0xFFC77B3A);
   static const Color primaryExtraSoft = Color(0xFFFFF4E9); // Very light tint
   static const Color secondary = Color(0xFFFFE3C7); // Soft complementary
@@ -16,8 +16,8 @@ class AppColors {
   // Gradients
   static LinearGradient bottomShadow = LinearGradient(
     colors: [
-      const Color(0xFFD99651).withValues(alpha: 0.2),
-      const Color(0xFFD99651).withValues(alpha: 0.0),
+      const Color(0xFFE6A86B).withValues(alpha: 0.2),
+      const Color(0xFFE6A86B).withValues(alpha: 0.0),
     ],
     begin: Alignment.bottomCenter,
     end: Alignment.topCenter,

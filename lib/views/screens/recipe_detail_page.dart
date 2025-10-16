@@ -85,6 +85,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     // lazy load data by id to ensure latest state on rebuilds
     if (_data == null) {
       final id = int.tryParse(widget.recipeId);
@@ -131,8 +132,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
             title: const Text(
               'Recipe Detail',
               style: TextStyle(
-                fontFamily: 'inter',
-                fontWeight: FontWeight.w400,
+                fontWeight: FontWeight.w600,
                 fontSize: 16,
                 color: Colors.white,
               ),
@@ -187,7 +187,10 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Colors.black.withOpacity(0.3), Colors.transparent],
+                    colors: [
+                      Colors.black.withValues(alpha: 0.55),
+                      Colors.transparent,
+                    ],
                   ),
                 ),
                 height: 280,
@@ -204,7 +207,11 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
               left: 16,
               right: 16,
             ),
-            color: AppColors.primary,
+            // Slightly darken primary for better contrast
+            color: Color.alphaBlend(
+              Colors.black.withValues(alpha: 0.08),
+              scheme.primary,
+            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -246,7 +253,6 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      fontFamily: 'inter',
                     ),
                   ),
                 ),
@@ -255,7 +261,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                   data['description'] ??
                       'Delicious recipe that you will love to cook and eat.',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 14,
                     height: 1.5,
                   ),
@@ -276,11 +282,8 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                 });
               },
               labelColor: Colors.black,
-              unselectedLabelColor: Colors.black.withOpacity(0.6),
-              labelStyle: const TextStyle(
-                fontFamily: 'inter',
-                fontWeight: FontWeight.w500,
-              ),
+              unselectedLabelColor: Colors.black.withValues(alpha: 0.6),
+              labelStyle: const TextStyle(fontWeight: FontWeight.w600),
               indicatorColor: Colors.black,
               tabs: const [
                 Tab(text: 'Ingredients'),

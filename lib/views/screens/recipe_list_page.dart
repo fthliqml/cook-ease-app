@@ -1,12 +1,12 @@
 import 'package:cook_ease_app/views/widgets/modals/search_filter_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:cook_ease_app/views/widgets/recipe_tile.dart';
-import 'package:flutter/services.dart';
 import 'package:cook_ease_app/viewmodels/recipe_list_view_model.dart';
 import 'package:cook_ease_app/data/local/drift/db_provider.dart';
 import 'package:cook_ease_app/repository/recipe_repository.dart';
 import 'package:cook_ease_app/views/widgets/search_filter_bar.dart';
 import 'package:cook_ease_app/views/widgets/category_wrap.dart';
+import 'package:cook_ease_app/views/widgets/app_layout.dart';
 
 class RecipeListPage extends StatefulWidget {
   const RecipeListPage({super.key});
@@ -46,21 +46,8 @@ class _RecipeListPageState extends State<RecipeListPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        systemOverlayStyle: SystemUiOverlayStyle.dark,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: false,
-        title: const Text(
-          "Let's Cooking",
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            color: Colors.black,
-          ),
-        ),
-      ),
+    return AppLayout(
+      title: "Let's Cooking",
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
