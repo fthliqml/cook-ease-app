@@ -104,13 +104,18 @@ class _RecipeListPageState extends State<RecipeListPage> {
                     child: ListView.builder(
                       itemCount: vm.searchResult.length,
                       itemBuilder: (context, index) {
+                        final recipe = vm.searchResult[index];
                         return Container(
                           margin: EdgeInsets.only(
                             bottom: index < vm.searchResult.length - 1 ? 16 : 0,
                           ),
                           child: Align(
                             alignment: Alignment.centerLeft,
-                            child: RecipeTile(recipe: vm.searchResult[index]),
+                            child: RecipeTile(
+                              recipe: recipe,
+                              isFavorite: recipe.isFavorited,
+                              onToggleFavorite: () => vm.toggleFavorite(recipe),
+                            ),
                           ),
                         );
                       },

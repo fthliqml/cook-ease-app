@@ -91,6 +91,46 @@ class RecipeTile extends StatelessWidget {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      // Category pill
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: scheme.surfaceVariant,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          recipe.category,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      // Difficulty dots (1..5)
+                      Row(
+                        children: List.generate(5, (i) {
+                          final active = i < (recipe.difficulty.index + 1);
+                          return Padding(
+                            padding: EdgeInsets.only(left: i == 0 ? 0 : 4),
+                            child: Icon(
+                              Icons.circle,
+                              size: 8,
+                              color: active
+                                  ? scheme.primary
+                                  : scheme.onSurfaceVariant.withOpacity(0.4),
+                            ),
+                          );
+                        }),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),

@@ -69,4 +69,15 @@ class RecipeListViewModel extends ChangeNotifier {
     _loading = v;
     notifyListeners();
   }
+
+  Future<void> toggleFavorite(RecipeModel model) async {
+    final newValue = !model.isFavorited;
+    // persist
+    await _repo.toggleFavorite(model.id, newValue);
+    // update local lists
+    _all = _all
+        .map((m) => m.id == model.id ? m.copyWith(isFavorited: newValue) : m)
+        .toList();
+    _applyFilter(); // will rebuild _filtered and notify
+  }
 }
