@@ -110,7 +110,7 @@ class _RecipeListPageState extends State<RecipeListPage> {
                           ),
                           child: Align(
                             alignment: Alignment.centerLeft,
-                            child: RecipeTile(data: vm.searchResult[index]),
+                            child: RecipeTile(recipe: vm.searchResult[index]),
                           ),
                         );
                       },

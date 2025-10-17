@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:cook_ease_app/config/themes/app_colors.dart';
 import 'package:cook_ease_app/data/local/drift/db_provider.dart';
 import 'package:cook_ease_app/repository/recipe_repository.dart';
+import 'package:cook_ease_app/core/models/recipes.dart';
 import 'package:go_router/go_router.dart';
 
 class RecipeDetailPage extends StatefulWidget {
@@ -37,7 +38,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
   }
 
   Color appBarColor = Colors.transparent;
-  Map<String, dynamic>? _data;
+  RecipeModel? _model;
 
   void changeAppBarColor(ScrollController scrollController) {
     if (scrollController.position.hasPixels) {
@@ -96,36 +97,24 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
       scheme.primary,
     );
     // lazy load data by id to ensure latest state on rebuilds
-    if (_data == null) {
+    if (_model == null) {
       final id = int.tryParse(widget.recipeId);
       if (id != null) {
         final repo = RecipeRepository(DBProvider().database);
-        repo.getRecipeById(id).then((r) {
+        repo.getRecipeModelById(id).then((r) {
           if (!mounted) return;
           setState(() {
-            _data = r == null
-                ? null
-                : {
-                    'id': r.id.toString(),
-                    'title': r.title,
-                    'photo': r.imgUrl,
-                    'cookTime': r.cookTime,
-                    'rating': 0.0,
-                    'description': r.description,
-                  };
+            _model = r;
           });
         });
       }
     }
-    final data =
-        _data ??
-        {
-          'title': 'Recipe',
-          'photo': 'assets/images/placeholder.jpg',
-          'cookTime': '0 min',
-          'rating': 0.0,
-          'description': 'No data found',
-        };
+    final title = _model?.title ?? 'Recipe';
+    final photo = (_model != null && _model!.imgUrl.isNotEmpty)
+        ? _model!.imgUrl
+        : 'assets/images/placeholder.jpg';
+    final cookTime = _model?.cookTime ?? '0 min';
+    final description = _model?.description ?? 'No data found';
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: PreferredSize(
@@ -186,9 +175,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
               width: MediaQuery.of(context).size.width,
               decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage(
-                    data['photo'] ?? 'assets/images/placeholder.jpg',
-                  ),
+                  image: AssetImage(photo),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -230,7 +217,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                     Container(
                       margin: const EdgeInsets.only(left: 5),
                       child: Text(
-                        data['rating']?.toString() ?? '0.0',
+                        '0.0',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -242,7 +229,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                     Container(
                       margin: const EdgeInsets.only(left: 5),
                       child: Text(
-                        data['cookTime'] ?? '0 min',
+                        cookTime,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -255,7 +242,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                 Container(
                   margin: const EdgeInsets.only(bottom: 12, top: 16),
                   child: Text(
-                    data['title'] ?? 'No Title',
+                    title,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
@@ -265,8 +252,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                 ),
                 // Recipe Description
                 Text(
-                  data['description'] ??
-                      'Delicious recipe that you will love to cook and eat.',
+                  description,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 14,

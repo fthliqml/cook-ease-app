@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cook_ease_app/core/models/recipes.dart';
 
 class RecipeTile extends StatelessWidget {
-  final Map<String, dynamic> data;
+  final RecipeModel recipe;
   final VoidCallback? onToggleFavorite;
   final bool? isFavorite;
 
   const RecipeTile({
     super.key,
-    required this.data,
+    required this.recipe,
     this.onToggleFavorite,
     this.isFavorite,
   });
@@ -16,12 +17,13 @@ class RecipeTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final id = (data['id'] ?? '').toString();
-    final title = (data['title'] ?? 'No Title').toString();
-    final cookTime = (data['cookTime'] ?? '0 min').toString();
-    final photoPath = (data['photo'] ?? 'assets/images/placeholder.jpg')
-        .toString();
-    final fav = isFavorite ?? (data['isFavorite'] as bool?) ?? false;
+    final id = recipe.id.toString();
+    final title = recipe.title;
+    final cookTime = recipe.cookTime;
+    final photoPath = recipe.imgUrl.isNotEmpty
+        ? recipe.imgUrl
+        : 'assets/images/placeholder.jpg';
+    final fav = isFavorite ?? recipe.isFavorited;
 
     return Card(
       elevation: 3,

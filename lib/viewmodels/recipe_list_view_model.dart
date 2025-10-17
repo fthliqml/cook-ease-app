@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:cook_ease_app/repository/recipe_repository.dart';
+import 'package:cook_ease_app/core/models/recipes.dart';
 
 class RecipeListViewModel extends ChangeNotifier {
   RecipeListViewModel(this._repo);
@@ -10,43 +11,26 @@ class RecipeListViewModel extends ChangeNotifier {
   String _query = '';
   String _selectedCategory = 'All';
 
-  List<Map<String, dynamic>> _all = [];
-  List<Map<String, dynamic>> _filtered = [];
+  List<RecipeModel> _all = [];
+  List<RecipeModel> _filtered = [];
   List<String> _categories = ['All'];
 
   bool get isLoading => _loading;
   String get query => _query;
   String get selectedCategory => _selectedCategory;
-  List<Map<String, dynamic>> get allRecipes => _all;
-  List<Map<String, dynamic>> get searchResult => _filtered;
+  List<RecipeModel> get allRecipes => _all;
+  List<RecipeModel> get searchResult => _filtered;
   List<String> get categories => _categories;
 
   Future<void> init() async {
     _setLoading(true);
     try {
-      final items = await _repo.getAllRecipes();
-      _all = items
-          .map<Map<String, dynamic>>(
-            (r) => {
-              'id': r.id.toString(),
-              'title': r.title,
-              'photo': r.imgUrl,
-              'cookTime': r.cookTime,
-              'rating': 0.0,
-              'description': r.description,
-              'category': r.category,
-            },
-          )
-          .toList();
+      _all = await _repo.getAllRecipeModels();
 
       // Build categories from data
-      final cats =
-          _all
-              .map((m) => (m['category']?.toString() ?? '').trim())
-              .where((c) => c.isNotEmpty)
-              .toSet()
-              .toList()
-            ..sort();
+      final cats = (_all.map(
+        (m) => m.category.trim(),
+      )..toSet()).where((c) => c.isNotEmpty).toSet().toList()..sort();
       _categories = ['All', ...cats];
 
       _applyFilter();
@@ -69,19 +53,13 @@ class RecipeListViewModel extends ChangeNotifier {
     final lower = _query.toLowerCase();
     final byQuery = _query.isEmpty
         ? _all
-        : _all
-              .where(
-                (m) => (m['title']?.toString().toLowerCase() ?? '').contains(
-                  lower,
-                ),
-              )
-              .toList();
+        : _all.where((m) => m.title.toLowerCase().contains(lower)).toList();
 
     if (_selectedCategory == 'All') {
-      _filtered = List<Map<String, dynamic>>.from(byQuery);
+      _filtered = List<RecipeModel>.from(byQuery);
     } else {
       _filtered = byQuery
-          .where((m) => (m['category']?.toString() ?? '') == _selectedCategory)
+          .where((m) => m.category == _selectedCategory)
           .toList();
     }
     notifyListeners();
