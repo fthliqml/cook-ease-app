@@ -5,8 +5,23 @@ class RecipeSeeder {
   static Future<void> seed(AppDatabase db) async {
     final existing = await db.select(db.recipes).get();
     if (existing.isNotEmpty) {
-      print('✅ Recipes already seeded.');
-      return;
+      // Detect legacy data (from old AppServices) and refresh if needed
+      final categories = existing.map((r) => r.category.trim()).toSet();
+      final allGeneral =
+          categories.length == 1 && categories.contains('General');
+      final allThree = existing.every(
+        (r) => r.difficultyLevel == Difficulty.three,
+      );
+
+      if (allGeneral || allThree) {
+        print(
+          '♻️ Legacy recipe data detected (category=General or difficulty=three for all). Refreshing seed...',
+        );
+        await (db.delete(db.recipes)).go();
+      } else {
+        print('✅ Recipes already seeded.');
+        return;
+      }
     }
 
     await db.batch((batch) {

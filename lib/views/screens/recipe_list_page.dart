@@ -74,13 +74,10 @@ class _RecipeListPageState extends State<RecipeListPage> {
           ),
 
           // Section 3 - Categories
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: CategoryWrap(
-              categories: vm.categories,
-              selected: vm.selectedCategory,
-              onSelect: vm.selectCategory,
-            ),
+          CategoryWrap(
+            categories: vm.categories,
+            selected: vm.selectedCategory,
+            onSelect: vm.selectCategory,
           ),
 
           // Section 4 - Results
