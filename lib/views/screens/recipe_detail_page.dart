@@ -6,6 +6,8 @@ import 'package:cook_ease_app/config/themes/app_text_styles.dart';
 import 'package:cook_ease_app/data/local/drift/db_provider.dart';
 import 'package:cook_ease_app/repository/recipe_repository.dart';
 import 'package:cook_ease_app/core/models/recipes.dart';
+import 'package:cook_ease_app/core/models/recipe_ingredient.dart';
+import 'package:cook_ease_app/core/models/recipe_step.dart';
 import 'package:go_router/go_router.dart';
 
 class RecipeDetailPage extends StatefulWidget {
@@ -30,6 +32,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
     _scrollController.addListener(() {
       changeAppBarColor(_scrollController);
     });
+    _loadRecipeData();
   }
 
   @override
@@ -42,6 +45,44 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
   Color appBarColor = Colors.transparent;
   RecipeModel? _model;
   bool _isFavorite = false;
+  List<RecipeIngredientModel> _ingredients = [];
+  List<RecipeStepModel> _steps = [];
+  bool _isLoadingData = true;
+
+  void _loadRecipeData() async {
+    final id = int.tryParse(widget.recipeId);
+    if (id == null) return;
+
+    final db = DBProvider().database;
+    final repo = RecipeRepository(db);
+
+    try {
+      // Load recipe details
+      final recipe = await repo.getRecipeModelById(id);
+
+      // Load ingredients
+      final ingredients = await db.recipeIngredientDao.getIngredientsByRecipeId(
+        id,
+      );
+
+      // Load steps
+      final steps = await db.recipeStepDao.getStepsByRecipeId(id);
+
+      if (!mounted) return;
+      setState(() {
+        _model = recipe;
+        _isFavorite = recipe?.isFavorited ?? false;
+        _ingredients = ingredients;
+        _steps = steps;
+        _isLoadingData = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingData = false;
+      });
+    }
+  }
 
   void _toggleFavorite() async {
     if (_model == null) return;
@@ -51,6 +92,49 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
       _isFavorite = !_isFavorite;
       _model = _model!.copyWith(isFavorited: _isFavorite);
     });
+
+    // Show modern toast notification
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                _isFavorite ? Icons.favorite : Icons.favorite_border,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _isFavorite
+                    ? 'Added to favorites ❤️'
+                    : 'Removed from favorites',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: _isFavorite
+            ? AppColors.secondary
+            : AppColors.textSecondary.withValues(alpha: 0.9),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 2),
+        elevation: 8,
+      ),
+    );
   }
 
   void changeAppBarColor(ScrollController scrollController) {
@@ -71,51 +155,10 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
     }
   }
 
-  // Get sample data for ingredients and tutorial
-  List<Map<String, dynamic>> get ingredients => [
-    {'name': 'Nasi putih', 'size': '2 piring'},
-    {'name': 'Telur ayam', 'size': '2 butir'},
-    {'name': 'Bawang merah', 'size': '3 siung'},
-    {'name': 'Bawang putih', 'size': '2 siung'},
-    {'name': 'Kecap manis', 'size': '2 sdm'},
-    {'name': 'Garam', 'size': 'secukupnya'},
-  ];
-
-  List<Map<String, dynamic>> get tutorials => [
-    {'step': 1, 'description': 'Panaskan minyak dalam wajan dengan api sedang'},
-    {
-      'step': 2,
-      'description': 'Tumis bawang merah dan bawang putih hingga harum',
-    },
-    {'step': 3, 'description': 'Masukkan telur, orak-arik hingga matang'},
-    {'step': 4, 'description': 'Masukkan nasi putih, aduk rata'},
-    {
-      'step': 5,
-      'description': 'Tambahkan kecap manis dan garam, aduk hingga rata',
-    },
-    {'step': 6, 'description': 'Masak hingga nasi panas merata, sajikan'},
-  ];
-
   @override
   Widget build(BuildContext context) {
-    // lazy load data by id to ensure latest state on rebuilds
-    if (_model == null) {
-      final id = int.tryParse(widget.recipeId);
-      if (id != null) {
-        final repo = RecipeRepository(DBProvider().database);
-        repo.getRecipeModelById(id).then((r) {
-          if (!mounted) return;
-          setState(() {
-            _model = r;
-            _isFavorite = r?.isFavorited ?? false;
-          });
-        });
-      }
-    }
     final title = _model?.title ?? 'Recipe';
-    final photo = (_model != null && _model!.imgUrl.isNotEmpty)
-        ? _model!.imgUrl
-        : 'assets/images/placeholder.jpg';
+    final photo = _model?.imgUrl;
     final cookTime = _model?.cookTime ?? '0 min';
     final description = _model?.description ?? 'No data found';
     final id = widget.recipeId;
@@ -253,12 +296,31 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                 Container(
                   height: 350,
                   width: double.infinity,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage(photo),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
+                  color: AppColors.surfaceVariant,
+                  child: photo != null && photo.isNotEmpty
+                      ? Image.asset(
+                          photo,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: AppColors.surfaceVariant,
+                              child: Center(
+                                child: Icon(
+                                  Icons.restaurant_menu,
+                                  size: 80,
+                                  color: AppColors.textTertiary,
+                                ),
+                              ),
+                            );
+                          },
+                        )
+                      : Center(
+                          child: Icon(
+                            Icons.restaurant_menu,
+                            size: 80,
+                            color: AppColors.textTertiary,
+                          ),
+                        ),
                 ),
                 Container(
                   height: 350,
@@ -367,10 +429,11 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                   const SizedBox(height: 24),
 
                   // Tab Content
-                  IndexedStack(
-                    index: _tabController.index,
-                    children: [_buildIngredientsList(), _buildTutorialList()],
-                  ),
+                  _tabController.index == 0
+                      ? _buildIngredientsList()
+                      : _buildTutorialList(),
+
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
@@ -398,12 +461,34 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
   }
 
   Widget _buildIngredientsList() {
+    if (_isLoadingData) {
+      return const Padding(
+        padding: EdgeInsets.all(24),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_ingredients.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: Text(
+            'No ingredients available',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+      );
+    }
+
     return ListView.builder(
       shrinkWrap: true,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: ingredients.length,
+      itemCount: _ingredients.length,
       itemBuilder: (context, index) {
+        final ingredient = _ingredients[index];
         return Container(
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(16),
@@ -417,19 +502,18 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                 width: 10,
                 height: 10,
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  color: ingredient.isOptional
+                      ? AppColors.textSecondary
+                      : AppColors.primary,
                   shape: BoxShape.circle,
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: Text(
-                  ingredients[index]['name'],
-                  style: AppTextStyles.bodyMedium,
-                ),
+                child: Text(ingredient.name, style: AppTextStyles.bodyMedium),
               ),
               Text(
-                ingredients[index]['size'],
+                '${ingredient.amount} ${ingredient.unit}',
                 style: AppTextStyles.labelMedium.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -442,12 +526,34 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
   }
 
   Widget _buildTutorialList() {
+    if (_isLoadingData) {
+      return const Padding(
+        padding: EdgeInsets.all(24),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_steps.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: Text(
+            'No instructions available',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+      );
+    }
+
     return ListView.builder(
       shrinkWrap: true,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: tutorials.length,
+      itemCount: _steps.length,
       itemBuilder: (context, index) {
+        final step = _steps[index];
         return Container(
           margin: const EdgeInsets.only(bottom: 20),
           child: Row(
@@ -469,7 +575,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                 ),
                 child: Center(
                   child: Text(
-                    '${tutorials[index]['step']}',
+                    '${step.stepOrder}',
                     style: AppTextStyles.labelLarge.copyWith(
                       color: Colors.white,
                     ),
@@ -484,9 +590,42 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                     color: AppColors.surfaceVariant,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Text(
-                    tutorials[index]['description'],
-                    style: AppTextStyles.bodyMedium.copyWith(height: 1.5),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (step.stepTitle.isNotEmpty) ...[
+                        Text(
+                          step.stepTitle,
+                          style: AppTextStyles.labelLarge.copyWith(
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                      Text(
+                        step.stepDescription,
+                        style: AppTextStyles.bodyMedium.copyWith(height: 1.5),
+                      ),
+                      if (step.durationMinutes != null) ...[
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.timer_outlined,
+                              size: 16,
+                              color: AppColors.secondary,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${step.durationMinutes} min${step.timerLabel != null ? ' - ${step.timerLabel}' : ''}',
+                              style: AppTextStyles.labelSmall.copyWith(
+                                color: AppColors.secondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ),
