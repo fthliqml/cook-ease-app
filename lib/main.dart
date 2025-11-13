@@ -8,7 +8,13 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Run centralized seeders on a single shared DB instance
   final db = DBProvider().database;
+
+  // 🔄 RESET & RESEED DATABASE (comment setelah selesai)
+  // await SeederRunner.reset(db);
+
+  // ✅ Normal seeder (hanya seed jika data kosong)
   await SeederRunner.run(db);
+
   runApp(const MyApp());
 }
 
