@@ -82,4 +82,10 @@ class RecipeRepository {
       await _recipeDao.updateRecipe(updated);
     }
   }
+
+  // 🔹 Ambil semua resep yang difavoritkan
+  Future<List<RecipeModel>> getFavoritedRecipes() async {
+    final list = await _recipeDao.getFavoritedRecipes();
+    return list.map(_toDomain).toList();
+  }
 }
