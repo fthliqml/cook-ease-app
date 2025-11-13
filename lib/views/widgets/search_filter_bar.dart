@@ -20,10 +20,10 @@ class SearchFilterBar extends StatelessWidget {
         // Search field
         Expanded(
           child: Container(
-            height: 48,
+            height: 40,
             decoration: BoxDecoration(
               color: scheme.surface,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(color: scheme.outlineVariant),
             ),
             alignment: Alignment.center,
@@ -31,26 +31,28 @@ class SearchFilterBar extends StatelessWidget {
               controller: controller,
               onChanged: onChanged,
               maxLines: 1,
+              style: const TextStyle(fontSize: 14),
               textInputAction: TextInputAction.search,
               decoration: const InputDecoration(
                 hintText: 'Search recipes...',
-                prefixIcon: Icon(Icons.search, size: 20),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                hintStyle: TextStyle(fontSize: 14),
+                prefixIcon: Icon(Icons.search, size: 18),
+                contentPadding: EdgeInsets.symmetric(horizontal: 10),
                 border: InputBorder.none,
               ),
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 8),
         // Filter button (centered icon)
         IconButton.filledTonal(
           onPressed: onFilterTap,
-          icon: const Icon(Icons.tune),
+          icon: const Icon(Icons.tune, size: 18),
           style: IconButton.styleFrom(
-            fixedSize: const Size(48, 48),
+            fixedSize: const Size(40, 40),
             padding: EdgeInsets.zero,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
           ),
         ),

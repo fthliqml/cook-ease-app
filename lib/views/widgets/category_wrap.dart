@@ -23,20 +23,23 @@ class CategoryWrap extends StatelessWidget {
           for (int i = 0; i < categories.length; i++)
             Padding(
               padding: EdgeInsets.only(
-                right: i == categories.length - 1 ? 0 : 8,
+                right: i == categories.length - 1 ? 0 : 6,
               ),
               child: ChoiceChip(
                 label: Text(categories[i]),
                 selected: categories[i] == selected,
                 onSelected: (_) => onSelect(categories[i]),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
                 labelStyle: TextStyle(
                   color: categories[i] == selected
                       ? scheme.onPrimary
                       : scheme.primary,
                   fontWeight: FontWeight.w600,
+                  fontSize: 13,
                 ),
                 selectedColor: scheme.primary,
                 backgroundColor: Colors.transparent,
+                visualDensity: VisualDensity.compact,
                 shape: StadiumBorder(side: BorderSide(color: scheme.primary)),
               ),
             ),

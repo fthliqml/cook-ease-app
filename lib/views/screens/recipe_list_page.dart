@@ -1,12 +1,13 @@
 import 'package:cook_ease_app/views/widgets/modals/search_filter_modal.dart';
 import 'package:flutter/material.dart';
-import 'package:cook_ease_app/views/widgets/recipe_tile.dart';
 import 'package:cook_ease_app/viewmodels/recipe_list_view_model.dart';
 import 'package:cook_ease_app/data/local/drift/db_provider.dart';
 import 'package:cook_ease_app/repository/recipe_repository.dart';
-import 'package:cook_ease_app/views/widgets/search_filter_bar.dart';
-import 'package:cook_ease_app/views/widgets/category_wrap.dart';
 import 'package:cook_ease_app/views/widgets/app_layout.dart';
+import 'package:cook_ease_app/views/widgets/components/modern_recipe_card.dart';
+import 'package:cook_ease_app/views/widgets/components/recipe_card_shimmer.dart';
+import 'package:cook_ease_app/config/themes/app_colors.dart';
+import 'package:cook_ease_app/config/themes/app_text_styles.dart';
 
 class RecipeListPage extends StatefulWidget {
   const RecipeListPage({super.key});
@@ -48,78 +49,220 @@ class _RecipeListPageState extends State<RecipeListPage> {
   Widget build(BuildContext context) {
     return AppLayout(
       title: "Let's Cooking",
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: Container(
+        color: AppColors.background,
+        child: CustomScrollView(
+          slivers: [
+            // 🔍 Modern Search Bar
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                child: _buildModernSearchBar(),
+              ),
+            ),
+
+            // 🏷️ Category Chips
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: _buildCategoryChips(),
+              ),
+            ),
+
+            // 📊 Results Counter
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  vm.searchResult.isEmpty
+                      ? 'No recipes found'
+                      : '${vm.searchResult.length} delicious recipes',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+
+            // 🍽️ Recipe Grid
+            vm.isLoading
+                ? SliverPadding(
+                    padding: const EdgeInsets.all(20),
+                    sliver: SliverGrid(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => const RecipeCardShimmer(),
+                        childCount: 6,
+                      ),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 0.60,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                          ),
+                    ),
+                  )
+                : vm.searchResult.isEmpty
+                ? SliverFillRemaining(child: _buildEmptyState())
+                : SliverPadding(
+                    padding: const EdgeInsets.all(20),
+                    sliver: SliverGrid(
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final recipe = vm.searchResult[index];
+                        return ModernRecipeCard(
+                          recipe: recipe,
+                          isFavorite: recipe.isFavorited,
+                          onToggleFavorite: () => vm.toggleFavorite(recipe),
+                        );
+                      }, childCount: vm.searchResult.length),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 0.60,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                          ),
+                    ),
+                  ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModernSearchBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: AppColors.softShadow,
+      ),
+      child: Row(
         children: [
-          // Section 2 - Search + Filter (white search)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: SearchFilterBar(
+          Expanded(
+            child: TextField(
               controller: searchInputController,
               onChanged: _searchRecipes,
-              onFilterTap: () {
-                showModalBottomSheet(
-                  context: context,
-                  backgroundColor: Colors.white,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
-                    ),
-                  ),
-                  builder: (context) => const SearchFilterModal(),
-                );
-              },
+              style: AppTextStyles.bodyMedium,
+              decoration: InputDecoration(
+                hintText: 'Search delicious recipes...',
+                hintStyle: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.textTertiary,
+                ),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: AppColors.textSecondary,
+                  size: 22,
+                ),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+              ),
             ),
           ),
-
-          // Section 3 - Categories
-          CategoryWrap(
-            categories: vm.categories,
-            selected: vm.selectedCategory,
-            onSelect: vm.selectCategory,
-          ),
-
-          // Section 4 - Results
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              width: double.infinity,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 15),
-                    child: Text(
-                      vm.searchResult.isEmpty
-                          ? 'No recipes found'
-                          : 'Found ${vm.searchResult.length} recipe(s)',
-                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(24),
+                          topRight: Radius.circular(24),
+                        ),
+                      ),
+                      child: const SearchFilterModal(),
                     ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Icon(
+                    Icons.tune_rounded,
+                    color: Colors.white,
+                    size: 20,
                   ),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: vm.searchResult.length,
-                      itemBuilder: (context, index) {
-                        final recipe = vm.searchResult[index];
-                        return Container(
-                          margin: EdgeInsets.only(
-                            bottom: index < vm.searchResult.length - 1 ? 16 : 0,
-                          ),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: RecipeTile(
-                              recipe: recipe,
-                              isFavorite: recipe.isFavorited,
-                              onToggleFavorite: () => vm.toggleFavorite(recipe),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
+                ),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryChips() {
+    return SizedBox(
+      height: 40,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: vm.categories.length,
+        itemBuilder: (context, index) {
+          final category = vm.categories[index];
+          final isSelected = category == vm.selectedCategory;
+          return Padding(
+            padding: EdgeInsets.only(
+              right: index == vm.categories.length - 1 ? 0 : 8,
+            ),
+            child: FilterChip(
+              label: Text(category),
+              selected: isSelected,
+              onSelected: (_) => vm.selectCategory(category),
+              labelStyle: AppTextStyles.labelMedium.copyWith(
+                color: isSelected ? Colors.white : AppColors.primary,
+              ),
+              backgroundColor: AppColors.surface,
+              selectedColor: AppColors.primary,
+              shape: StadiumBorder(
+                side: BorderSide(
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.primary.withValues(alpha: 0.3),
+                  width: 1.5,
+                ),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.search_off_rounded,
+            size: 80,
+            color: AppColors.textTertiary,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No recipes found',
+            style: AppTextStyles.h3.copyWith(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Try adjusting your search or filters',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textTertiary,
             ),
           ),
         ],

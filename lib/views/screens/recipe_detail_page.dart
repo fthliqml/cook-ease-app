@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cook_ease_app/config/themes/app_colors.dart';
+import 'package:cook_ease_app/config/themes/app_text_styles.dart';
 import 'package:cook_ease_app/data/local/drift/db_provider.dart';
 import 'package:cook_ease_app/repository/recipe_repository.dart';
 import 'package:cook_ease_app/core/models/recipes.dart';
@@ -39,19 +41,25 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
 
   Color appBarColor = Colors.transparent;
   RecipeModel? _model;
+  bool _isFavorite = false;
+
+  void _toggleFavorite() async {
+    if (_model == null) return;
+    final repo = RecipeRepository(DBProvider().database);
+    await repo.toggleFavorite(_model!.id, !_isFavorite);
+    setState(() {
+      _isFavorite = !_isFavorite;
+      _model = _model!.copyWith(isFavorited: _isFavorite);
+    });
+  }
 
   void changeAppBarColor(ScrollController scrollController) {
     if (scrollController.position.hasPixels) {
-      if (scrollController.position.pixels > 2.0) {
+      if (scrollController.position.pixels > 100.0) {
         setState(() {
-          // Match the info section color for better consistency
-          appBarColor = Color.alphaBlend(
-            Colors.black.withValues(alpha: 0.08),
-            Theme.of(context).colorScheme.primary,
-          );
+          appBarColor = AppColors.surface.withValues(alpha: 0.95);
         });
-      }
-      if (scrollController.position.pixels <= 2.0) {
+      } else {
         setState(() {
           appBarColor = Colors.transparent;
         });
@@ -90,12 +98,6 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    // Shared darker primary used by app bar (scrolled), info section, and FAB
-    final infoBg = Color.alphaBlend(
-      Colors.black.withValues(alpha: 0.08),
-      scheme.primary,
-    );
     // lazy load data by id to ensure latest state on rebuilds
     if (_model == null) {
       final id = int.tryParse(widget.recipeId);
@@ -105,6 +107,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
           if (!mounted) return;
           setState(() {
             _model = r;
+            _isFavorite = r?.isFavorited ?? false;
           });
         });
       }
@@ -115,266 +118,382 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
         : 'assets/images/placeholder.jpg';
     final cookTime = _model?.cookTime ?? '0 min';
     final description = _model?.description ?? 'No data found';
+    final id = widget.recipeId;
+
     return Scaffold(
+      backgroundColor: AppColors.background,
       extendBodyBehindAppBar: true,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
         child: AnimatedContainer(
           color: appBarColor,
-          duration: const Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: 250),
           child: AppBar(
             backgroundColor: Colors.transparent,
             systemOverlayStyle: SystemUiOverlayStyle.light,
             elevation: 0,
             centerTitle: true,
-            title: const Text(
-              'Recipe Detail',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-                color: Colors.white,
+            title: AnimatedOpacity(
+              opacity: appBarColor != Colors.transparent ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 250),
+              child: Text(
+                title,
+                style: AppTextStyles.h4.copyWith(
+                  color: appBarColor != Colors.transparent
+                      ? AppColors.textPrimary
+                      : Colors.white,
+                ),
               ),
             ),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+            leading: Container(
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: appBarColor != Colors.transparent
+                    ? Colors.transparent
+                    : Colors.black.withValues(alpha: 0.3),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: appBarColor != Colors.transparent
+                      ? AppColors.textPrimary
+                      : Colors.white,
+                  size: 20,
+                ),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
             ),
             actions: [
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.bookmark_border, color: Colors.white),
+              Container(
+                margin: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: appBarColor != Colors.transparent
+                      ? Colors.transparent
+                      : Colors.black.withValues(alpha: 0.3),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  onPressed: _toggleFavorite,
+                  icon: Icon(
+                    _isFavorite
+                        ? Icons.favorite
+                        : Icons.favorite_border_rounded,
+                    color: _isFavorite
+                        ? AppColors.secondary
+                        : (appBarColor != Colors.transparent
+                              ? AppColors.textPrimary
+                              : Colors.white),
+                    size: 22,
+                  ),
+                ),
               ),
             ],
           ),
         ),
       ),
-      // Start Cooking FAB
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          context.push('/recipes/${widget.recipeId}/cook');
-        },
-        // Match the info section color
-        backgroundColor: infoBg,
-        child: const Icon(Icons.play_arrow, size: 28, color: Colors.white),
-      ),
-      body: ListView(
-        controller: _scrollController,
-        shrinkWrap: true,
-        padding: EdgeInsets.zero,
-        physics: const BouncingScrollPhysics(),
-        children: [
-          // Section 1 - Recipe Image
-          GestureDetector(
-            onTap: () {
-              // Full screen image functionality - empty for now
-            },
-            child: Container(
-              height: 280,
-              width: MediaQuery.of(context).size.width,
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage(photo),
-                  fit: BoxFit.cover,
-                ),
-              ),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withValues(alpha: 0.55),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-                height: 280,
-                width: MediaQuery.of(context).size.width,
-              ),
-            ),
-          ),
-          // Section 2 - Recipe Info
+      // Modern Start Cooking FAB
+      floatingActionButton:
           Container(
-            width: MediaQuery.of(context).size.width,
-            padding: const EdgeInsets.only(
-              top: 20,
-              bottom: 30,
-              left: 16,
-              right: 16,
-            ),
-            // Slightly darken primary for better contrast (shared)
-            color: infoBg,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Recipe Rating and Time
-                Row(
-                  children: [
-                    const Icon(Icons.star, color: Colors.orange, size: 16),
-                    Container(
-                      margin: const EdgeInsets.only(left: 5),
-                      child: Text(
-                        '0.0',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    const Icon(Icons.alarm, size: 16, color: Colors.white),
-                    Container(
-                      margin: const EdgeInsets.only(left: 5),
-                      child: Text(
-                        cookTime,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                        ),
-                      ),
+                decoration: BoxDecoration(
+                  gradient: AppColors.primaryGradient,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.4),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
                     ),
                   ],
                 ),
-                // Recipe Title
-                Container(
-                  margin: const EdgeInsets.only(bottom: 12, top: 16),
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                // Recipe Description
-                Text(
-                  description,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 14,
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Tabbar ( Ingredients, Tutorial )
-          Container(
-            height: 60,
-            width: MediaQuery.of(context).size.width,
-            color: AppColors.secondary,
-            child: TabBar(
-              controller: _tabController,
-              onTap: (index) {
-                setState(() {
-                  _tabController.index = index;
-                });
-              },
-              labelColor: Colors.black,
-              unselectedLabelColor: Colors.black.withValues(alpha: 0.6),
-              labelStyle: const TextStyle(fontWeight: FontWeight.w600),
-              indicatorColor: Colors.black,
-              tabs: const [
-                Tab(text: 'Ingredients'),
-                Tab(text: 'Tutorial'),
-              ],
-            ),
-          ),
-          // IndexedStack based on TabBar index - only 2 tabs now
-          IndexedStack(
-            index: _tabController.index,
-            children: [
-              // Ingredients
-              ListView.builder(
-                shrinkWrap: true,
-                padding: EdgeInsets.zero,
-                itemCount: ingredients.length,
-                physics: const NeverScrollableScrollPhysics(),
-                itemBuilder: (context, index) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => context.push('/recipes/$id/cook'),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.play_arrow_rounded,
+                            color: Colors.white,
+                            size: 24,
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Text(
-                            ingredients[index]['name'],
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                        ),
-                        Text(
-                          ingredients[index]['size'],
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-              // Tutorials
-              ListView.builder(
-                shrinkWrap: true,
-                padding: EdgeInsets.zero,
-                itemCount: tutorials.length,
-                physics: const NeverScrollableScrollPhysics(),
-                itemBuilder: (context, index) {
-                  return Container(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(
-                              tutorials[index]['step'].toString(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Start Cooking',
+                            style: AppTextStyles.buttonText.copyWith(
+                              color: Colors.white,
                             ),
                           ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              )
+              .animate()
+              .fadeIn(duration: 400.ms, delay: 300.ms)
+              .slideY(begin: 0.3, end: 0),
+      body: ListView(
+        controller: _scrollController,
+        padding: EdgeInsets.zero,
+        physics: const BouncingScrollPhysics(),
+        children: [
+          // 📸 Hero Image Section
+          Hero(
+            tag: 'recipe_image_$id',
+            child: Stack(
+              children: [
+                Container(
+                  height: 350,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage(photo),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                Container(
+                  height: 350,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.3),
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.7),
+                      ],
+                      stops: const [0.0, 0.5, 1.0],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // 📝 Recipe Info Card
+          Transform.translate(
+            offset: const Offset(0, -30),
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(32),
+                  topRight: Radius.circular(32),
+                ),
+                boxShadow: AppColors.elevatedShadow,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Title
+                        Text(
+                          title,
+                          style: AppTextStyles.h1.copyWith(fontSize: 26),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Text(
-                            tutorials[index]['description'],
-                            style: const TextStyle(fontSize: 16, height: 1.4),
+                        const SizedBox(height: 16),
+
+                        // Meta Info Row
+                        Row(
+                          children: [
+                            _buildMetaChip(
+                              Icons.access_time_rounded,
+                              cookTime,
+                              AppColors.primary,
+                            ),
+                            const SizedBox(width: 12),
+                            _buildMetaChip(
+                              Icons.star_rounded,
+                              '4.5',
+                              AppColors.secondary,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Description
+                        Text(
+                          description,
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.textSecondary,
+                            height: 1.6,
                           ),
                         ),
                       ],
                     ),
-                  );
-                },
+                  ),
+
+                  // Tab Bar
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 24),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceVariant,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: TabBar(
+                      controller: _tabController,
+                      onTap: (index) =>
+                          setState(() => _tabController.index = index),
+                      labelColor: Colors.white,
+                      unselectedLabelColor: AppColors.textSecondary,
+                      labelStyle: AppTextStyles.labelLarge,
+                      indicator: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      indicatorSize: TabBarIndicatorSize.tab,
+                      dividerColor: Colors.transparent,
+                      padding: const EdgeInsets.all(4),
+                      tabs: const [
+                        Tab(text: 'Ingredients'),
+                        Tab(text: 'Instructions'),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Tab Content
+                  IndexedStack(
+                    index: _tabController.index,
+                    children: [_buildIngredientsList(), _buildTutorialList()],
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMetaChip(IconData icon, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 6),
+          Text(label, style: AppTextStyles.labelMedium.copyWith(color: color)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIngredientsList() {
+    return ListView.builder(
+      shrinkWrap: true,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: ingredients.length,
+      itemBuilder: (context, index) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceVariant,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  ingredients[index]['name'],
+                  style: AppTextStyles.bodyMedium,
+                ),
+              ),
+              Text(
+                ingredients[index]['size'],
+                style: AppTextStyles.labelMedium.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ).animate().fadeIn(delay: (index * 50).ms).slideX(begin: -0.1, end: 0);
+      },
+    );
+  }
+
+  Widget _buildTutorialList() {
+    return ListView.builder(
+      shrinkWrap: true,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: tutorials.length,
+      itemBuilder: (context, index) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 20),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  gradient: AppColors.primaryGradient,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    '${tutorials[index]['step']}',
+                    style: AppTextStyles.labelLarge.copyWith(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceVariant,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    tutorials[index]['description'],
+                    style: AppTextStyles.bodyMedium.copyWith(height: 1.5),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ).animate().fadeIn(delay: (index * 50).ms).slideX(begin: 0.1, end: 0);
+      },
     );
   }
 }
