@@ -6,7 +6,7 @@ part 'recipe_dao.g.dart';
 
 @DriftAccessor(tables: [Recipes])
 class RecipeDao extends DatabaseAccessor<AppDatabase> with _$RecipeDaoMixin {
-  RecipeDao(AppDatabase db) : super(db);
+  RecipeDao(super.db);
 
   Future<List<Recipe>> getAllRecipes() => select(recipes).get();
   Future<Recipe?> getRecipeById(int id) =>

@@ -1,5 +1,6 @@
 /// Domain model for a Recipe used by UI/ViewModels.
 /// Keeps UI decoupled from the Drift-generated types.
+library;
 
 enum RecipeDifficulty { one, two, three, four, five }
 

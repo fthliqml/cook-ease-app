@@ -8,7 +8,7 @@ part 'cooking_history_dao.g.dart';
 @DriftAccessor(tables: [CookingHistories])
 class CookingHistoryDao extends DatabaseAccessor<AppDatabase>
     with _$CookingHistoryDaoMixin {
-  CookingHistoryDao(AppDatabase db) : super(db);
+  CookingHistoryDao(super.db);
 
   /// Get all cooking history, sorted by most recent first
   Future<List<CookingHistoryModel>> getAllHistory() async {

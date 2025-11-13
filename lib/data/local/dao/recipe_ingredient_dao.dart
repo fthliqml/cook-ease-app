@@ -8,7 +8,7 @@ part 'recipe_ingredient_dao.g.dart';
 @DriftAccessor(tables: [RecipeIngredients])
 class RecipeIngredientDao extends DatabaseAccessor<AppDatabase>
     with _$RecipeIngredientDaoMixin {
-  RecipeIngredientDao(AppDatabase db) : super(db);
+  RecipeIngredientDao(super.db);
 
   /// Get all ingredients for a specific recipe, sorted by order
   Future<List<RecipeIngredientModel>> getIngredientsByRecipeId(

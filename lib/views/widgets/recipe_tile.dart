@@ -101,7 +101,7 @@ class RecipeTile extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: scheme.surfaceVariant,
+                          color: scheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -124,7 +124,9 @@ class RecipeTile extends StatelessWidget {
                               size: 8,
                               color: active
                                   ? scheme.primary
-                                  : scheme.onSurfaceVariant.withOpacity(0.4),
+                                  : scheme.onSurfaceVariant.withValues(
+                                      alpha: 0.4,
+                                    ),
                             ),
                           );
                         }),

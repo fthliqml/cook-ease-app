@@ -8,7 +8,7 @@ part 'recipe_step_dao.g.dart';
 @DriftAccessor(tables: [RecipeSteps])
 class RecipeStepDao extends DatabaseAccessor<AppDatabase>
     with _$RecipeStepDaoMixin {
-  RecipeStepDao(AppDatabase db) : super(db);
+  RecipeStepDao(super.db);
 
   /// Get all steps for a specific recipe, sorted by step_order
   Future<List<RecipeStepModel>> getStepsByRecipeId(int recipeId) async {

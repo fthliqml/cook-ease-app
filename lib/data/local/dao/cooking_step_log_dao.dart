@@ -8,7 +8,7 @@ part 'cooking_step_log_dao.g.dart';
 @DriftAccessor(tables: [CookingStepLogs])
 class CookingStepLogDao extends DatabaseAccessor<AppDatabase>
     with _$CookingStepLogDaoMixin {
-  CookingStepLogDao(AppDatabase db) : super(db);
+  CookingStepLogDao(super.db);
 
   /// Get all step logs for a cooking session
   Future<List<CookingStepLogModel>> getLogsByCookingHistoryId(

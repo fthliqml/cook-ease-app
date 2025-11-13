@@ -45,7 +45,9 @@ class _ModernRecipeCardState extends State<ModernRecipeCard> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOutCubic,
-            transform: Matrix4.identity()..scale(_isPressed ? 0.97 : 1.0),
+            transform: _isPressed
+                ? (Matrix4.identity()..scale(0.97, 0.97, 1.0))
+                : Matrix4.identity(),
             child: Container(
               decoration: BoxDecoration(
                 color: AppColors.surface,
