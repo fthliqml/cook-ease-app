@@ -8,6 +8,7 @@ import 'package:cook_ease_app/repository/recipe_repository.dart';
 import 'package:cook_ease_app/core/models/recipes.dart';
 import 'package:cook_ease_app/core/models/recipe_ingredient.dart';
 import 'package:cook_ease_app/core/models/recipe_step.dart';
+import 'package:cook_ease_app/core/models/cooking_history.dart';
 import 'package:go_router/go_router.dart';
 
 class RecipeDetailPage extends StatefulWidget {
@@ -48,6 +49,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
   List<RecipeIngredientModel> _ingredients = [];
   List<RecipeStepModel> _steps = [];
   bool _isLoadingData = true;
+  bool _hasInProgressSession = false;
 
   void _loadRecipeData() async {
     final id = int.tryParse(widget.recipeId);
@@ -68,12 +70,19 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
       // Load steps
       final steps = await db.recipeStepDao.getStepsByRecipeId(id);
 
+      // Check for in-progress session
+      final history = await db.cookingHistoryDao.getHistoryByRecipeId(id);
+      final hasInProgress = history.any(
+        (h) => h.status == CookingStatus.inProgress,
+      );
+
       if (!mounted) return;
       setState(() {
         _model = recipe;
         _isFavorite = recipe?.isFavorited ?? false;
         _ingredients = ingredients;
         _steps = steps;
+        _hasInProgressSession = hasInProgress;
         _isLoadingData = false;
       });
     } catch (e) {
@@ -262,14 +271,18 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
-                            Icons.play_arrow_rounded,
+                          Icon(
+                            _hasInProgressSession
+                                ? Icons.play_circle_rounded
+                                : Icons.play_arrow_rounded,
                             color: Colors.white,
                             size: 24,
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Start Cooking',
+                            _hasInProgressSession
+                                ? 'Resume Cooking'
+                                : 'Start Cooking',
                             style: AppTextStyles.buttonText.copyWith(
                               color: Colors.white,
                             ),
